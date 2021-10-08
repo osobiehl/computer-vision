@@ -17,12 +17,12 @@ def dot_product(a, b):
 
 
     ### YOUR CODE HERE
-    out = a.dot(b)
+    out = np.dot(a, b)
     ### END YOUR CODE
     return out
 
 
-def complicated_matrix_function(M, a, b):
+def complicated_matrix_function(M: np.array, a: np.array, b: np.array):
     """Implement (a * b) * (M * a.T).
 
     (optional): Use the `dot_product(a, b)` function you wrote above
@@ -38,10 +38,10 @@ def complicated_matrix_function(M, a, b):
     """
     out = None
     ### YOUR CODE HERE
+    
+    # print(ab_dot)
 
-    ab_dot = a.dot(b)
-    MaT_mult = M.dot(a.T)
-    out = ab_dot.dot(MaT_mult)
+    out = np.matmul( (np.dot(a, b)) * M, a.T)
 
 
 
@@ -64,11 +64,12 @@ def svd(M):
         s: numpy array of shape (k).
         v: numpy array of shape (n, n).
     """
+    
     u = None
     s = None
     v = None
     ### YOUR CODE HERE
-    pass
+    u,s,v = np.linalg.svd(M)
     ### END YOUR CODE
 
     return u, s, v
@@ -90,6 +91,8 @@ def get_singular_values(M, k):
     singular_values = None
     ### YOUR CODE HERE
     pass
+    u,s,v = svd(M)
+    singular_values = s[0:k]
     ### END YOUR CODE
     return singular_values
 
