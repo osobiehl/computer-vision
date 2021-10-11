@@ -3,6 +3,7 @@ import math
 import numpy as np
 from PIL import Image
 from skimage import color, io
+import skimage
 
 
 def load(image_path):
@@ -20,7 +21,7 @@ def load(image_path):
 
     ### YOUR CODE HERE
     # Use skimage io.imread
-    pass
+    out = skimage.io.imread(image_path)
     ### END YOUR CODE
 
     # Let's convert the image to be between the correct range.
@@ -28,7 +29,7 @@ def load(image_path):
     return out
 
 
-def dim_image(image):
+def dim_image(image: np.array):
     """Change the value of every pixel by following
 
                         x_n = 0.5*x_p^2
@@ -43,6 +44,7 @@ def dim_image(image):
     """
 
     out = None
+    out = np.array([0.5 * x**2 for x in image])
 
     ### YOUR CODE HERE
     pass
@@ -66,13 +68,13 @@ def convert_to_grey_scale(image):
     out = None
 
     ### YOUR CODE HERE
-    pass
+    out  = color.rgb2gray(image)
     ### END YOUR CODE
 
     return out
 
 
-def rgb_exclusion(image, channel):
+def rgb_exclusion(image, channel: str ):
     """Return image **excluding** the rgb channel specified
 
     Args:
@@ -82,14 +84,28 @@ def rgb_exclusion(image, channel):
     Returns:
         out: numpy array of shape(image_height, image_width, 3).
     """
-
+    to_remove = None
+    if channel == 'R':
+        to_remove = 0
+    elif channel == "G":
+        to_remove = 1
+    elif channel == "B":
+        to_remove = 2
+    else:
+        raise ValueError("R, G, or B not given!")
     out = None
 
     ### YOUR CODE HERE
-    pass
+    # print(image.shape)
+    # zeros = np.zeros(image.shape[0:2])
+    cpy = image.copy()
+    channel = cpy[:,:,to_remove]
+    channel = np.zeros(channel.shape)
+    # print(channel.shape)
+    cpy[:,:, to_remove] = channel
     ### END YOUR CODE
 
-    return out
+    return cpy
 
 
 def lab_decomposition(image, channel):
@@ -106,8 +122,18 @@ def lab_decomposition(image, channel):
     lab = color.rgb2lab(image)
     out = None
 
+    to_split = None
+    if channel == 'L':
+        to_split = 0
+    elif channel == 'A':
+        to_split = 1
+    elif channel == 'B':
+        to_split = 2
+    else:
+        raise ValueError("incorrect input, expected L, A, or B")
+        
     ### YOUR CODE HERE
-    pass
+    out = lab[:,:,to_split]
     ### END YOUR CODE
 
     return out
@@ -125,10 +151,12 @@ def hsv_decomposition(image, channel='H'):
     """
 
     hsv = color.rgb2hsv(image)
-    out = None
 
     ### YOUR CODE HERE
-    pass
+    mapping = {'H': 0, 'S': 1, 'V': 2}
+
+    out = hsv[:,:,mapping[channel]]
+
     ### END YOUR CODE
 
     return out
@@ -151,11 +179,23 @@ def mix_images(image1, image2, channel1, channel2):
     Returns:
         out: numpy array of shape(image_height, image_width, 3).
     """
+    img1_removed = rgb_exclusion(image1, channel1)
+    img1_dims = image1.shape
+    # img1_width = img1_dims[1]
+    img1_half = np.split(img1_removed, 2, axis=1)
+    img1_half = img1_half[0]
+    #second image
+    img2_removed = rgb_exclusion(image2 , channel2)
+    # img2_dims = image2.shape
 
-    out = None
-    ### YOUR CODE HERE
-    pass
-    ### END YOUR CODE
+    #split from half onwards
+    img2_half = np.split(img2_removed, 2, axis=1)
+    img2_half = img2_half[1]
+    #concatenate
+    # print(img1_half.shape, img2_half.shape)
+    out = np.concatenate((img1_half, img2_half), axis=1)
+    # print(out.shape)
+
 
     return out
 

@@ -112,7 +112,8 @@ def eigen_decomp(M):
     w = None
     v = None
     ### YOUR CODE HERE
-    pass
+    # pass
+    w,v = np.linalg.eig(M)
     ### END YOUR CODE
     return w, v
 
@@ -137,6 +138,10 @@ def get_eigen_values_and_vectors(M, k):
     eigenvalues = []
     eigenvectors = []
     ### YOUR CODE HERE
-    pass
+    eigenvalues, eigenvectors = eigen_decomp(M)
+    positions = eigenvalues.argsort()[::-1]
+    eigenvalues = eigenvalues[positions]
+    eigenvectors = eigenvectors[positions]
+  
     ### END YOUR CODE
-    return eigenvalues, eigenvectors
+    return eigenvalues[0:k], eigenvectors[0:k]
