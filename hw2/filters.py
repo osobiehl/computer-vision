@@ -20,7 +20,17 @@ def conv_nested(image, kernel):
     out = np.zeros((Hi, Wi))
 
     ### YOUR CODE HERE
-    pass
+    for m in range(Hi):
+        for n in range(Wi):
+            s=0.0
+            #kernel width and height
+            for i in range(Hk):
+                for j in range(Wk):
+                    if m+1-i < 0 or n+1-j < 0 or m+1-i >= Hi or n+1-j >= Wi:
+                        s+= 0
+                    else:
+                        s += kernel[i][j]*image[m+1-i][n+1-j]
+            out[m][n] = s
     ### END YOUR CODE
 
     return out
@@ -47,7 +57,8 @@ def zero_pad(image, pad_height, pad_width):
     out = None
 
     ### YOUR CODE HERE
-    pass
+    out = np.zeros((2*pad_height+H, 2*pad_width+W))
+    out[pad_height:pad_height + H, pad_width:pad_width + W] = image
     ### END YOUR CODE
     return out
 
@@ -73,10 +84,17 @@ def conv_fast(image, kernel):
     """
     Hi, Wi = image.shape
     Hk, Wk = kernel.shape
+    #we have to flip the kernel because of how convolution is defined
+    ker = np.flip(kernel, axis=0)
+    ker = np.flip(ker, axis=1)
+    img = zero_pad(image, Hk //2, Wk //2)
     out = np.zeros((Hi, Wi))
-
-    ### YOUR CODE HERE
-    pass
+    for m in range(Hi):
+        for n in range(Wi):
+            # our slice is the same size as the kernel, starting w/
+            # the zero-padded beginning and ending with the zero-padded end
+            out[m][n] = np.sum(img[m:m+Hk, n:n+Wk] * ker)
+    
     ### END YOUR CODE
 
     return out
@@ -115,7 +133,9 @@ def cross_correlation(f, g):
 
     out = None
     ### YOUR CODE HERE
-    pass
+    g_flipped = np.flip(g, axis=0)
+    g_flipped = np.flip(g_flipped, axis=1)
+    out = conv_fast(f,g_flipped)
     ### END YOUR CODE
 
     return out
