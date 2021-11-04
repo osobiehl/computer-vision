@@ -18,20 +18,17 @@ def conv_nested(image, kernel):
     Hi, Wi = image.shape
     Hk, Wk = kernel.shape
     out = np.zeros((Hi, Wi))
-
-    ### YOUR CODE HERE
+    
     for m in range(Hi):
         for n in range(Wi):
-            s=0.0
-            #kernel width and height
+            sum = 0
             for i in range(Hk):
                 for j in range(Wk):
                     if m+1-i < 0 or n+1-j < 0 or m+1-i >= Hi or n+1-j >= Wi:
-                        s+= 0
+                        sum += 0
                     else:
-                        s += kernel[i][j]*image[m+1-i][n+1-j]
-            out[m][n] = s
-    ### END YOUR CODE
+                        sum += kernel[i][j] * image[m+1-i][n+1-j]
+            out[m][n] = sum
 
     return out
 
@@ -56,10 +53,8 @@ def zero_pad(image, pad_height, pad_width):
     H, W = image.shape
     out = None
 
-    ### YOUR CODE HERE
-    out = np.zeros((2*pad_height+H, 2*pad_width+W))
-    out[pad_height:pad_height + H, pad_width:pad_width + W] = image
-    ### END YOUR CODE
+    out = np.zeros((H+2*pad_height, W+2*pad_width))
+    image = out[pad_height: H+pad_height, pad_width: W+pad_width]
     return out
 
 
@@ -84,18 +79,14 @@ def conv_fast(image, kernel):
     """
     Hi, Wi = image.shape
     Hk, Wk = kernel.shape
-    #we have to flip the kernel because of how convolution is defined
-    ker = np.flip(kernel, axis=0)
-    ker = np.flip(ker, axis=1)
-    img = zero_pad(image, Hk //2, Wk //2)
     out = np.zeros((Hi, Wi))
+
+    image = zero_pad(image, Hk//2, Wk//2)
+    kernel = np.flip(kernel, 0)
+    kernel = np.flip(kernel, 1)
     for m in range(Hi):
         for n in range(Wi):
-            # our slice is the same size as the kernel, starting w/
-            # the zero-padded beginning and ending with the zero-padded end
-            out[m][n] = np.sum(img[m:m+Hk, n:n+Wk] * ker)
-    
-    ### END YOUR CODE
+            out[m, n] =  np.sum(image[m: m+Hk, n: n+Wk] * kernel)
 
     return out
 
@@ -112,9 +103,16 @@ def conv_faster(image, kernel):
     Hk, Wk = kernel.shape
     out = np.zeros((Hi, Wi))
 
-    ### YOUR CODE HERE
-    pass
-    ### END YOUR CODE
+    image = zero_pad(image, Hk//2, Wk//2)
+    kernel = np.flip(np.flip(kernel, 0), 1)
+    # The trick is to lay out all the (Hk, Wk) patches and organize them into a (Hi*Wi, Hk*Wk) matrix.
+    # Also consider the kernel as (Hk*Wk, 1) vector. Then the convolution naturally reduces to a matrix multiplication.
+    mat = np.zeros((Hi*Wi, Hk*Wk))
+    for i in range(Hi*Wi):
+        row = i // Wi
+        col = i % Wi
+        mat[i, :] = image[row: row+Hk, col: col+Wk].reshape(1, Hk*Wk)
+    out = mat.dot(kernel.reshape(Hk*Wk, 1)).reshape(Hi, Wi)
 
     return out
 
@@ -131,11 +129,8 @@ def cross_correlation(f, g):
         out: numpy array of shape (Hf, Wf).
     """
 
-    out = None
-    ### YOUR CODE HERE
-    g_flipped = np.flip(g, axis=(0,1))
-    out = conv_fast(f,g_flipped)
-    ### END YOUR CODE
+    g = np.flip(np.flip(g, 0), 1)
+    out = conv_fast(f, g)
 
     return out
 
@@ -154,15 +149,8 @@ def zero_mean_cross_correlation(f, g):
         out: numpy array of shape (Hf, Wf).
     """
 
-    out = None
-    ### YOUR CODE HERE
-    g_mean = np.mean(g, axis=(0,1))
-    g_zero_mean = g - g_mean
-    f_mean = np.mean(f, axis=(0,1))
-    f_zero_mean = f-f_mean
-    out = cross_correlation(g_zero_mean, f_zero_mean)
-    ### END YOUR CODE
-
+    g = g - np.mean(g)
+    out = cross_correlation(f, g)
     return out
 
 def normalized_cross_correlation(f, g):
@@ -181,17 +169,9 @@ def normalized_cross_correlation(f, g):
     Returns:
         out: numpy array of shape (Hf, Wf).
     """
-    
-    out = None
-    ### YOUR CODE HERE
-    
-    g_mean = np.mean(g, axis=(0,1))
-    f_mean = np.mean(f, axis=(0,1))
-    g_var = np.var(g, axis=(0,1))
-    f_var = np.var(g, axis=(0,1))
-    f_ = (f-f_mean)/f_var
-    g_ = (g-g_mean)/g_var
-    out= cross_correlation(f_, g_)
-    ### END YOUR CODE
+
+    f = (f - np.mean(f))/np.var(f)
+    g = (g - np.mean(g))/np.var(g)
+    out = cross_correlation(f, g)
 
     return out
