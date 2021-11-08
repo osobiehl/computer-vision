@@ -85,8 +85,7 @@ def conv_fast(image, kernel):
     Hi, Wi = image.shape
     Hk, Wk = kernel.shape
     #we have to flip the kernel because of how convolution is defined
-    ker = np.flip(kernel, axis=0)
-    ker = np.flip(ker, axis=1)
+    ker = np.flip(kernel, axis=(0,1))
     img = zero_pad(image, Hk //2, Wk //2)
     out = np.zeros((Hi, Wi))
     for m in range(Hi):
@@ -118,6 +117,9 @@ def conv_faster(image, kernel):
 
     return out
 
+def cross_correlation_control(f,g):
+    pass
+
 def cross_correlation(f, g):
     """ Cross-correlation of f and g.
 
@@ -134,6 +136,7 @@ def cross_correlation(f, g):
     out = None
     ### YOUR CODE HERE
     g_flipped = np.flip(g, axis=(0,1))
+    f_flipped = np.flip(f, axis=(0,1))
     out = conv_fast(f,g_flipped)
     ### END YOUR CODE
 
