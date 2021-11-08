@@ -118,7 +118,43 @@ def conv_faster(image, kernel):
     return out
 
 def cross_correlation_control(f,g):
-    pass
+    Hi, Wi = f.shape
+    Hk, Wk = g.shape
+    out = np.zeros((Hi, Wi))
+
+    ### YOUR CODE HERE
+    for m in range(Hi):
+        for n in range(Wi):
+            s = 0.00
+            for i in range(Hk):
+                if i+m >= Hi:
+                    break
+                for j in range(Wk):
+                    if  j+n >= Wi:
+                        break
+                    s+= f[i +m][j + n]*g[i][j] 
+            out[m][n] = s
+    ### END YOUR CODE
+
+    return out
+def cross_correlation_smart(f,g):
+    Hi, Wi = f.shape
+    Hk, Wk = g.shape
+    #we have to flip the kernel because of how convolution is defined
+    ker = g
+    img = zero_pad(f, Hk, Wk)
+    out = np.zeros((Hi, Wi))
+    for m in range(Hi):
+        for n in range(Wi):
+            # our slice is the same size as the kernel, starting w/
+            # the zero-padded beginning and ending with the zero-padded end
+            out[m][n] = np.sum(img[(Hk+m):m+2*Hk,  (Wk+n):n+ 2*Wk] * ker)
+    
+    ### END YOUR CODE
+
+    return out
+
+
 
 def cross_correlation(f, g):
     """ Cross-correlation of f and g.
@@ -135,9 +171,10 @@ def cross_correlation(f, g):
 
     out = None
     ### YOUR CODE HERE
-    g_flipped = np.flip(g, axis=(0,1))
-    f_flipped = np.flip(f, axis=(0,1))
-    out = conv_fast(f,g_flipped)
+    g_ = np.flip(g, axis=(0,1))
+    out = conv_fast(f,g_)
+    
+    # out = cross_correlation_smart(f,g)
     ### END YOUR CODE
 
     return out
@@ -159,11 +196,12 @@ def zero_mean_cross_correlation(f, g):
 
     out = None
     ### YOUR CODE HERE
+    f_mean = np.mean(f, axis=(0,1))
+    f_zero_mean = f - f_mean
     g_mean = np.mean(g, axis=(0,1))
     g_zero_mean = g - g_mean
-    f_mean = np.mean(f, axis=(0,1))
-    f_zero_mean = f-f_mean
-    out = cross_correlation(g_zero_mean, f_zero_mean)
+    
+    out = cross_correlation(f, g_zero_mean)
     ### END YOUR CODE
 
     return out
@@ -187,7 +225,31 @@ def normalized_cross_correlation(f, g):
     
     out = None
     ### YOUR CODE HERE
+    Hi, Wi = f.shape
+    Hk, Wk = g.shape
+    #we have to flip the kernel because of how convolution is defined
+    g_mean = np.mean(g, axis=(0,1))
+    g_var = np.var(g, axis=(0,1))
+
+    ker =( g - g_mean) / g_var
+
+    img = zero_pad(f, Hk //2, Wk //2)
+    out = np.zeros((Hi, Wi))
+    for m in range(Hi):
+        for n in range(Wi):
+            mean_fmn = np.mean(img[m:m+Hk, n:n+Wk], axis=(0,1))
+            var_fmn = np.var(img[m:m+Hk, n:n+Wk], axis=(0,1))
+            f_patch = (img[m:m+Hk, n:n+Wk] - mean_fmn) / var_fmn
+            # our slice is the same size as the kernel, starting w/
+            # the zero-padded beginning and ending with the zero-padded end
+            out[m][n] = np.sum(f_patch * ker)
     
+    ### END YOUR CODE
+
+    return out
+
+
+
     g_mean = np.mean(g, axis=(0,1))
     f_mean = np.mean(f, axis=(0,1))
     g_var = np.var(g, axis=(0,1))
